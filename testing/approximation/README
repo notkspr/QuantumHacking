@@ -1,0 +1,9 @@
+Approximation
+
+A random seed "A" is selected.
+4 real numbers: p,q,r,s are to satisfy that their product is A
+
+The loss function loss() should converge but it takes a long time due to poor optimisations
+
+K is a constant for specifing the learning speed
+if it is too high may result into inf and -inf values
