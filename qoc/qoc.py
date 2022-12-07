@@ -6,7 +6,7 @@ import torch
 t = 1*10**(-8)
 N = 5
 dt = t/N
-hbar = 1.05*10**(-34)
+hbar = 1
 
 # Define gates for quantum gates
 X = torch.tensor([[0, 1], [1, 0]])
@@ -26,7 +26,7 @@ U0 = torch.complex(real, imag)
 
 # 
 def U(n):
-  return torch.exp(complex(0, -1)/hbar*(Hd + a1[n]*H1c + a2[n]*H2c)*dt)
+  return torch.linalg.matrix_exp(complex(0, -1)/hbar*(Hd + a1[n]*H1c + a2[n]*H2c)*dt)
 
 
 def Uf():
@@ -41,9 +41,9 @@ def Uf():
 # main process
 a1 = torch.tensor([0., 0., 0., 0., 0.], requires_grad=True)
 a2 = torch.tensor([0., 0., 0., 0., 0.], requires_grad=True)
-L = (torch.log10(abs(torch.trace(torch.matmul(torch.adjoint(Uf()),U0)))/8))**2
+L = (abs(torch.trace(torch.matmul(torch.adjoint(Uf()),U0)))/8)**2
 while L.item() > 0.1:
-  L = (torch.log10(abs(torch.trace(torch.matmul(torch.adjoint(Uf()),U0)))/8))**2
+  L = (abs(torch.trace(torch.matmul(torch.adjoint(Uf()),U0)))/8)**2
   L.backward(retain_graph = True)
   a1 = a1-0.01*a1.grad #is the grad vector normalized, it actually shouldn't be normalized (from my understanding on 3b1b AI video on gradient)
   a2 = a2-0.01*a2.grad #a larger magnitude denotes a larger step so not too sure about why it needs to be normalized
