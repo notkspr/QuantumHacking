@@ -3,7 +3,7 @@ import torch
 # Total run time (quantum)
 t = 1
 # Number of slices of t
-N = 5
+N = 10
 # Time interval
 dt = t/N
 
@@ -39,18 +39,17 @@ def Uf():
 
 # Main process (tuning the amplitudes a1, a2)
 # a1
-a1r = torch.rand(5)
-a1i = torch.zeros(5)
+a1r = torch.rand(N)
+a1i = torch.zeros(N)
 a1 = torch.complex(a1r, a1i).requires_grad_() # amplitude for control Hamiltonian H^1_c
 # a2
-a2r = torch.rand(5)
-a2i = torch.zeros(5)
+a2r = torch.rand(N)
+a2i = torch.zeros(N)
 a2 = torch.complex(a2r, a2i).requires_grad_() # amplitude for control Hamiltonian H^2_c
 
 L = abs(torch.trace(torch.matmul(torch.adjoint(Uf()), U0))/8-1)**2 # fidelity, min. (0) is achieved when product of unitaries = target matrix
 r = 1 # learning rate
 k = 0 # epoch
-new_line = "\n"
 
 while L.item() > 10**(-10):
   L = abs(torch.trace(torch.matmul(torch.adjoint(Uf()), U0))/8-1)**2
@@ -69,10 +68,11 @@ while L.item() > 10**(-10):
   k += 1 
 
 # Final result
-Litem = L.item()
-P_U = str(Uf())
 print(f"Epoch: {k} ")
-print(f"Loss: {Litem}")
-print("Product of unitaries:")
-print(f"{P_U}")
+print(f"Loss: {L.item()}")
 print("Fidelity: " + str(abs(torch.trace(torch.matmul(torch.adjoint(Uf()), U0)).item()/8)**2))
+print("Product of unitaries:")
+print(f"{Uf()}")
+print("U gates:")
+for i in range(N):
+  print(f"U({i}): " + str(torch.linalg.matrix_exp(complex(0, -1)*(Hd + a1[i]*H1c + a2[i]*H2c)*dt)))
