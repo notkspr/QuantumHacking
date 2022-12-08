@@ -54,12 +54,10 @@ k = 0 # epoch
 while L.item() > 10**(-10):
   L = abs(torch.trace(torch.matmul(torch.adjoint(Uf()), U0))/8-1)**2
   if k % 10 == 0:
-    Litem = L.item()
-    P_U = str(Uf())
     print(f"Epoch: {k} ")
-    print(f"Loss: {Litem}")
+    print(f"Loss: {L.item}")
     print("Product of unitaries:")
-    print(f"{P_U}")
+    print(f"{str(Uf())}")
   L.backward(retain_graph = True)
   a1 = torch.sub(a1, a1.grad, alpha = r)
   a2 = torch.sub(a2, a2.grad, alpha = r)
