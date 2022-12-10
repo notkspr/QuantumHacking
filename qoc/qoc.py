@@ -45,10 +45,11 @@ L = (abs(torch.trace(torch.matmul(torch.adjoint(Uf()),U0)))/8)**2
 while L.item() > 0.1:
   L = (abs(torch.trace(torch.matmul(torch.adjoint(Uf()),U0)))/8)**2
   L.backward(retain_graph = True)
+  print(a1.grad)
   a1 = a1-0.01*a1.grad #is the grad vector normalized, it actually shouldn't be normalized (from my understanding on 3b1b AI video on gradient)
   a2 = a2-0.01*a2.grad #a larger magnitude denotes a larger step so not too sure about why it needs to be normalized
   a1 = a1.clone().detach().requires_grad_(True)
   a2 = a2.clone().detach().requires_grad_(True)
-  print(Uf())
+
 
   
