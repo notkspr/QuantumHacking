@@ -44,7 +44,7 @@ def train(model, optim, target, requiredaccuracy, maxiterations):
     i = 0
     while 1+loss >= requiredaccuracy and i<maxiterations:
         predictedOut = model()
-        loss = fidelity(predictedOut, target)+penalty(model, weight)
+        loss = fidelity(predictedOut, target) #TODO:+penalty(model, weight)
         if i % 100 == 99:
             print(loss.item())
         optim.zero_grad()
@@ -105,4 +105,3 @@ adam = torch.optim.Adam(model.parameters(), lr = 0.001)
 train(model, adam, H0, requiredaccuracy=0.01, maxiterations=10000)
 
 #trainn(Hc, dt, N, maxpower, 100, QOC, adam, H0, 0.01, 500, 1000000)
-
