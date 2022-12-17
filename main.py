@@ -8,16 +8,15 @@ class QOC(nn.Module):
 
         self.Hd = Hd
         self.H1c = H1c
-        self.H2c = H2c  #TODO: Hc more general list of tensors
+        self.H2c = H2c
         self.dt = dt
         self.N = N
-
-        self.a1 = nn.Parameter(torch.randn(N).requires_grad_()) #TODO: More general a 
-        self.a2 = nn.Parameter(torch.randn(N).requires_grad_())
+        self.a1 = nn.Parameter(torch.randn(N))
+        self.a2 = nn.Parameter(torch.randn(N))
 
 
     def forward(self):
-        output = torch.complex(torch.eye(8), torch.zeros(8)) # torch.eye(self.Hc.shape[0])
+        output = torch.complex(torch.eye(8), torch.zeros(8))
         for i in range(self.N):
             output = torch.matmul(torch.linalg.matrix_exp(complex(0, -1)*(self.Hd + self.a1[i]*self.H1c + self.a2[i]*self.H2c)*self.dt), output) #TODO IMPORTANT NEED TO CHANGE
         return output # may change
