@@ -48,21 +48,23 @@ class QOC(nn.Module):
 # Helper functions
 def fidelity(current, target):
     # fidelity function: find the "difference" between the current and the target matrix/pulse
-    return torch.abs(torch.trace(torch.matmul(current.adjoint(),target))/target.shape[0])**2
+    return -torch.abs(torch.trace(torch.matmul(current.adjoint(),target))/target.shape[0])**2
 
 def penalty(matrix, weight):
     # penalty function: makes the pulse smoother
     return torch.sum(torch.diff(matrix, dim=1)**2)*weight
 
-def train(model, optim, target, requiredaccuracy, maxiterations, weight):
+def train(model, optim, target, accuracy, smoothness, maxiterations, weight):
     # training data
-    loss = 1
+    fid = 0
+    pen = 1
+    loss = 0
     i = 0
-    while loss >= requiredaccuracy and i<maxiterations:
+    while (1+fid >= accuracy or pen >= smoothness) and i<maxiterations:
         predictedOut = model()
         fid = fidelity(predictedOut, target)
         pen = penalty(model.a, weight)
-        loss = fid + pen
+        loss = (1+fid) + pen
         if i % 100 == 99:
             print(f"Epoch {i+1}:\n - loss: {loss.item()}\n - fidelity: {fid}\n - penalty: {pen}")
         optim.zero_grad()
@@ -122,5 +124,6 @@ Hc = torch.stack([H1c, H2c])
 # Main Function
 model = QOC(Hd, Hc, dt, N, maxpower, torch.randn(Hc.shape[0], N))
 adam = torch.optim.Adam(model.parameters(), lr = 0.001)
-train(model=model, optim=adam, target=H0, requiredaccuracy=0.01, maxiterations=15000, weight=0.1)
+# high smoothness -> high weight
+train(model=model, optim=adam, target=H0, accuracy=0.01, smoothness=0.5, maxiterations=100000, weight=0.1)
 model.plot()
