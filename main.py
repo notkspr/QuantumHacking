@@ -70,7 +70,7 @@ def train(model, optim, target, requiredaccuracy, maxiterations, weight):
         optim.step()
         i += 1
     print("Training Finished:")
-    print(f"loss: {loss.item()}\n - fidelity: {fidelity(model(), target)}\n - penalty: {penalty(model.a, weight)}")
+    print(f"- loss: {loss.item()}\n - fidelity: {fidelity(model(), target)}\n - penalty: {penalty(model.a, weight)}")
 
     
 # deprecated
