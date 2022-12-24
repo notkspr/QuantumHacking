@@ -22,12 +22,16 @@ class QOC(nn.Module):
         U = torch.linalg.matrix_exp(-H*self.dt)
         return reduce(torch.matmul, U)
 
-    # TODO
     def plot(self):
-        import matplotlib.pyplot
         import numpy as np
+        import matplotlib.pyplot as plt
 
-        xlist = np.array(range(self.a.shape[0]))
+        y = np.array(self.a.detach())
+        print(y)
+        
+        for i in range(self.a.shape[0]):
+            plt.plot(y[i])
+            plt.show()
         
 
         
@@ -51,7 +55,6 @@ def train(model, optim, target, requiredaccuracy, maxiterations):
         loss.backward(retain_graph=True)
         optim.step()
         i += 1
-    print(model())
 
     
 # TODO
@@ -103,5 +106,7 @@ model = QOC(Hd, Hc, dt, N, maxpower, torch.randn(Hc.shape[0], N))
 
 adam = torch.optim.Adam(model.parameters(), lr = 0.001)
 train(model, adam, H0, requiredaccuracy=0.01, maxiterations=10000)
+
+model.plot()
 
 #trainn(Hc, dt, N, maxpower, 100, QOC, adam, H0, 0.01, 500, 1000000)
