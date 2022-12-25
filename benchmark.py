@@ -74,7 +74,7 @@ def train(model, optim, target, requiredaccuracy, penaltyconst, weight, maxitera
 
 
 n = 3
-N = 1.25*(4**n)
+N = int(1.25*(4**n))
 '''
 n = 2, N = 20
 n = 3, N = 80

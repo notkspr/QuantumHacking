@@ -74,14 +74,7 @@ def train(model, optim, target, requiredaccuracy, penaltyconst, weight, maxitera
 
 
 n = 3
-N = 1.25*(4**n)
-'''
-n = 2, N = 20
-n = 3, N = 80
-n = 4, N = 300
-n = 5, N = 1200
-n = 6, N = 5000
-'''
+N = int(5*(4**n))
 dt = 0.0001
 
 X = torch.tensor([[0, 1], [1, 0]], dtype=torch.complex64)
