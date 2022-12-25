@@ -10,4 +10,4 @@ Mentors:
 Faith
 Zipeng Wu
 
-main.py is the file for our code.
+core/core.py is the main file

@@ -1,0 +1,3 @@
+core.py is the main file
+
+to use it, import QOC and train from core
