@@ -1,17 +1,17 @@
 """
-For comparing with (with qutip)
+NMR parameters for 3 qubits (generalized to n qubits, shown in the comments)
 """
 import warnings
 import torch
-from pathlib import Path
 
-from core import QOC, trainwithtiming
+from core import QOC, train
 
 # ignore complex warnings
 warnings.filterwarnings("ignore")
 
+
 n = 3
-N = int(5*(4**n))
+N = 600
 dt = 0.0001
 
 X = torch.tensor([[0, 1], [1, 0]], dtype=torch.complex64)
@@ -60,5 +60,5 @@ H0[7][6] = 1
 
 
 model = QOC(Hd, Hc, dt, N, maxpower, torch.randn(Hc.shape[0], N))
-optim = torch.optim.Adam(model.parameters(), lr = 0.001)
-trainwithtiming(model = model, optim = optim, target = H0, requiredaccuracy = 0.01, penaltyconst = 2, weight = 1/N, maxiterations = 100000)
+optim = torch.optim.Adam(model.parameters(), lr = 0.003)
+train(model = model, optim = optim, target = H0, accuracy = 0.0001, roughness = 1, weight = 0*1/N, maxiterations = 100000, benchbool = False)
