@@ -23,95 +23,73 @@ class QOC(nn.Module):
 
 
     def forward(self):
-        H = 1j*self.Hd + torch.einsum("li, ljk -> ijk", 1j*self.a, self.Hc)*self.maxpower
-        U = torch.linalg.matrix_exp(-H*self.dt)
+        iH = 1j*self.Hd + torch.einsum("li, ljk -> ijk", 1j*self.a, self.Hc)*self.maxpower
+        U = torch.linalg.matrix_exp(-iH*self.dt)
         return reduce(torch.matmul, U)
 
     def plot(self):
-        y = np.array(self.forward().detach())
-        
-        for i in range(y.shape[0]):
-            try:    
-                open(str(Path(__file__).parent.absolute())+f"/results/qubit/{i}.png", "x").close()
-            except:
-                pass
-            plt.plot(y[i])
-            plt.title(f"Qubit {i}")
-            plt.savefig(str(Path(__file__).parent.absolute())+f"/results/qubit/{i}.png")
-            plt.clf()
-        
         a = np.array(self.a.detach())
         for i in range(a.shape[0]):
             try:
-                open(str(Path(__file__).parent.absolute())+f"/results/a/{i}.png", "x").close()
+                open(str(Path(__file__).parent.absolute())+f"/results/a/a{i+1}.png", "x").close()
             except:
                 pass
-            plt.plot(a[i])
-            plt.title(f"A {i}")
-            plt.savefig(str(Path(__file__).parent.absolute())+f"/results/a/{i}.png")
+            plt.plot(np.linspace(0, self.dt*self.N, self.N), a[i])
+            plt.title(f"Control Pulse {i+1}")
+            plt.xlabel("time evolved (s)")
+            plt.ylabel("pulse amplitude")
+            plt.savefig(str(Path(__file__).parent.absolute())+f"/results/a/a{i+1}.png")
             plt.clf()
-    def print(self):
+
+    def printa(self):
         print(self.a)
 
 
 # Helper functions
 def fidelity(current, target):
     # fidelity function: find the "difference" between the current and the target matrix/pulse
-    return -torch.abs(torch.trace(torch.matmul(current.adjoint(),target))/target.shape[0])**2
+    return torch.abs(torch.trace(torch.matmul(current.adjoint(),target))/target.shape[0])**2
 
 def penalty(matrix, weight):
     # penalty function: makes the pulse smoother
     return torch.sum(torch.diff(matrix, dim=1)**2)*weight
 
-def train(model, optim, target, accuracy, smoothness, maxiterations, weight):
-    # training data
-    fid = 0
-    pen = 1
-    loss = 0
-    i = 0
-    while (1+fid >= accuracy or pen >= smoothness*weight) and i<maxiterations:
-        predictedOut = model()
-        fid = fidelity(predictedOut, target)
-        pen = penalty(model.a, weight)
-        loss = (1+fid) + pen
-        if i % 100 == 99:
-            print(f"Epoch {i+1}:\n - loss: {loss.item()}\n - fidelity: {fid}\n - smoothness: {pen}")
-        optim.zero_grad()
-        loss.backward(retain_graph=True)
-        optim.step()
-        i += 1
-    print("Training Finished:")
-    print(f" - loss: {loss.item()}\n - fidelity: {fidelity(model(), target)}\n - smoothness: {penalty(model.a, weight)}")
 
-def trainwithtiming(model, optim, target, requiredaccuracy, penaltyconst, weight, maxiterations):
-    loss = 0
+# Training function
+def train(model, optim, target, accuracy, roughness, weight, maxiterations, benchbool):
+    fid = fidelity(target, model())
+    pen = penalty(model.a, weight)
+    loss = 1 - fid + pen
     i = 0
-    while (1+fidelity(target, model()) >= requiredaccuracy or penalty(model.a, weight) > penaltyconst*weight) and i<maxiterations:
-        loss = 1+fidelity(target, model()) + penalty(model.a, weight)
+    while ((1-fid) >= accuracy or pen > roughness*weight) and i < maxiterations:
         if i % 100 == 0:
             if i == 0:
                 start_time = time.time()
                 timing = time.time() - start_time
-                print(f"Epoch {i} ({math.floor(timing/3600):02}:{math.floor(timing/60 % 60):02}:{math.floor(timing % 60):02}.{str(timing % 1)[2:]})")
-                print(f"- loss: {loss.item()}")
-                print(f"- fidelity: {-fidelity(target, model())}")
-                print(f"- penalty: {penalty(model.a, weight)}\n")
+                if benchbool != True:
+                    print(f"Epoch {i} ({math.floor(timing/3600):02}:{math.floor(timing/60 % 60):02}:{math.floor(timing % 60):02}.{str(timing % 1)[2:]})")
+                    print(f"- Loss: {loss.item()}\n- Fidelity: {fid}\n- Roughness: {pen}\n")
             else:
-                timing = time.time()-start_time
-                print(f"Epoch {i} ({math.floor(timing/3600):02}:{math.floor(timing/60 % 60):02}:{math.floor(timing % 60):02}.{str(timing % 1)[2:]})")
-                print(f"- loss: {loss.item()}")
-                print(f"- fidelity: {-fidelity(target, model())}")
-                print(f"- penalty: {penalty(model.a, weight)}")
-                print(f"- average time per epoch: {(timing)/(i+1)} seconds\n")
+                timing = time.time() - start_time
+                if benchbool != True:
+                    print(f"Epoch {i} ({math.floor(timing/3600):02}:{math.floor(timing/60 % 60):02}:{math.floor(timing % 60):02}.{str(timing % 1)[2:]})")
+                    print(f"- Loss: {loss.item()}\n- Fidelity: {fid}\n- Roughness: {pen}\n- Average time per epoch: {(timing)/(i+1)} seconds\n")
         optim.zero_grad()
         loss.backward(retain_graph=True)
         optim.step()
+        fid = fidelity(target, model())
+        pen = penalty(model.a, weight)
+        loss = 1 - fid + pen
         i += 1
-    timing = time.time()-start_time
-    print(f"Epoch {i} ({math.floor(timing/3600):02}:{math.floor(timing/60 % 60):02}:{math.floor(timing % 60):02}.{str(timing % 1)[2:]})")
-    loss = -fidelity(target, model()) + penalty(model.a, weight)
-    print(f"- loss: {loss.item()}")
-    print(f"- fidelity: {-fidelity(target, model())}")
-    print(f"- penalty: {penalty(model.a, weight)}\n")
-    print(f"Average time per epoch: {(timing)/(i+1)} seconds")
-    model.plot()
+    timing = time.time() - start_time
+    fid = fidelity(target, model())
+    pen = penalty(model.a, weight)
+    loss = 1 - fid + pen
+    if benchbool != True:
+        print("Training Finished:")
+        print(f"Epoch {i} ({math.floor(timing/3600):02}:{math.floor(timing/60 % 60):02}:{math.floor(timing % 60):02}.{str(timing % 1)[2:]})")
+        print(f"- Loss: {loss.item()}\n- Fidelity: {fid}\n- Roughness: {pen}\n- Average time per epoch: {(timing)/(i+1)} seconds\n")
+        model.plot()
+    itertime = (timing)/(i+1)
+    if benchbool == True:
+        return itertime
