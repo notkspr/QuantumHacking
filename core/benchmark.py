@@ -80,7 +80,7 @@ except:
     pass
 
 plt.plot(xlist, ylist_model, color='r', label='Our model')
-ylist_qutip = [0.0976, 0.4844, 2.1328, 11.7062] # values from qutip_benchmark.py
+ylist_qutip = [0.0526, 0.2166, 0.9456, 5.8112, 92.0416] # values from qutip_benchmark.py
 plt.plot(xlist, ylist_qutip, color='g', label='Qutip')
 plt.yscale("log")
 plt.title(f"Iteration time")
