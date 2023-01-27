@@ -5,6 +5,7 @@ import warnings
 import torch
 from pathlib import Path
 import matplotlib.pyplot as plt
+import math
 
 from core import QOC, train
 
@@ -44,25 +45,28 @@ def benchmark(n, N):
     Hc = torch.stack([torch.einsum("ijk -> jk", Xs), torch.einsum("ijk -> jk", Ys)])
     maxpower = 1
 
-    # Target unitary
-    H0 = torch.eye(2**n, dtype=torch.complex64)
+    # Target unitary: Hadamard gate on n qubits
+    H = torch.tensor([[1/math.sqrt(2), 1/math.sqrt(2)], [1/math.sqrt(2), -1/math.sqrt(2)]], dtype=torch.complex64)
+    U0 = torch.tensor([1], dtype = torch.complex64)
+    for i in range(n):
+        U0 = torch.kron(U0, H)
 
     model = QOC(Hd, Hc, dt, N, maxpower, torch.randn(Hc.shape[0], N))
     optim = torch.optim.Adam(model.parameters(), lr = 0.001)
-    return train(model = model, optim = optim, target = H0, accuracy = 0.01, roughness = 10, weight = 1/N, maxiterations = 100, bool = True)
+    return train(model = model, optim = optim, target = U0, accuracy = 0.01, roughness = 10, weight = 1/N, maxiterations = 50, benchbool = True)
 
 def printresult(n, N, result):
     print(f"Number of qubits: {n}\nNumber of time slices: {N}")
-    print(f"Average time per epoch: {result}\n")
+    print(f"Average time per epoch: {result} seconds\n")
 
 xlist = []
-ylist = []
+ylist_model = []
 
 def func(n, N):
     result = benchmark(n, N)
     printresult(n, N, result)
     xlist.append(n)
-    ylist.append(result)
+    ylist_model.append(result)
 
 func(2, 20)
 func(3, 80)
@@ -75,10 +79,14 @@ try:
 except:
     pass
 
-plt.plot(xlist, ylist)
+plt.plot(xlist, ylist_model, color='r', label='Our model')
+ylist_qutip = [0.0526, 0.2166, 0.9456, 5.8112, 92.0416] # values from qutip_benchmark.py
+plt.plot(xlist, ylist_qutip, color='g', label='Qutip')
+plt.yscale("log")
 plt.title(f"Iteration time")
 plt.xlabel("number of qubits N")
 plt.ylabel("runtime per iteration (s)")
 plt.xticks(xlist)
+leg = plt.legend(loc='lower right')
 plt.savefig(str(Path(__file__).parent.absolute())+f"/results/time/time.png")
 plt.clf()

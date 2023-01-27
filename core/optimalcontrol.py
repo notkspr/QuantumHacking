@@ -52,13 +52,13 @@ Hc = torch.stack([torch.einsum("ijk -> jk", Xs), torch.einsum("ijk -> jk", Ys)])
 maxpower = 1500
 
 # Target unitary
-H0 = torch.eye(2**n, dtype=torch.complex64)
-H0[6][6] = 0
-H0[6][7] = 1
-H0[7][7] = 0
-H0[7][6] = 1
+U0 = torch.eye(2**n, dtype=torch.complex64)
+U0[6][6] = 0
+U0[6][7] = 1
+U0[7][7] = 0
+U0[7][6] = 1
 
 
 model = QOC(Hd, Hc, dt, N, maxpower, torch.randn(Hc.shape[0], N))
 optim = torch.optim.Adam(model.parameters(), lr = 0.003)
-train(model = model, optim = optim, target = H0, accuracy = 0.0001, roughness = 1, weight = 0*1/N, maxiterations = 100000, benchbool = False)
+train(model = model, optim = optim, target = U0, accuracy = 0.0001, roughness = 1, weight = 1/N, maxiterations = 100000, benchbool = False)
